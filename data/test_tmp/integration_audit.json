@@ -1,0 +1,22 @@
+[
+  {
+    "index": 0,
+    "timestamp": "2026-09-01T00:00:00Z",
+    "event_type": "GENESIS_LEDGER_INITIALIZED",
+    "screening_id": "SYSTEM_ROOT",
+    "actor_role": "SSB_COMMAND_CENTRAL",
+    "details_summary": "IDShield-X Cryptographic Audit Trail Initialized at Raxaul ICP Border Checkpost.",
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "hash": "57cc55fcc809786ae061385ef6d6da63cabaa011413080105cd1c8da283c7ac6"
+  },
+  {
+    "index": 1,
+    "timestamp": "2026-09-04T15:39:34.702391Z",
+    "event_type": "SCREENING_COMMITTED_TO_LEDGER",
+    "screening_id": "SCR-20260904-CC2624",
+    "actor_role": "Sub-Inspector on Duty",
+    "details_summary": "Screening finalized with status Low Concern.",
+    "prev_hash": "57cc55fcc809786ae061385ef6d6da63cabaa011413080105cd1c8da283c7ac6",
+    "hash": "282765fe226be4293d5cccfedbfb99a59e4e53348660aac2f56c31c6fe511dea"
+  }
+]

@@ -1,0 +1,123 @@
+/* ==============================================================================
+   IDShield-X Tactical Defense UI Styling
+   Theme: Sashastra Seema Bal (SSB) / Ministry of Home Affairs (MHA)
+   ============================================================================== */
+
+:root {
+    --bg-primary: #070d1e;
+    --bg-surface: #0e172a;
+    --bg-card: #13203b;
+    --bg-card-border: #1e3a5f;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-blue: #2563eb;
+    --accent-cyan: #06b6d4;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #ef4444;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Glassmorphic Tactical Card */
+.card-defense {
+    background: rgba(19, 32, 59, 0.85);
+    border: 1px solid var(--bg-card-border);
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+}
+
+/* Dropzone Styling */
+.dropzone-box {
+    border: 2px dashed #2a4365;
+    background-color: rgba(15, 23, 42, 0.6);
+    transition: all 0.25s ease-in-out;
+}
+
+.dropzone-box:hover, .dropzone-box.dragover {
+    border-color: #3b82f6;
+    background-color: rgba(30, 58, 138, 0.2);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.15);
+}
+
+/* Glowing Tactical Border */
+.tactical-border-active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
+}
+
+/* Nav Item States */
+.nav-item {
+    transition: all 0.2s ease;
+}
+
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.3) 0%, rgba(37, 99, 235, 0.05) 100%);
+    border-left: 3px solid #3b82f6;
+    color: #60a5fa;
+}
+
+.nav-item:hover:not(.active) {
+    background-color: rgba(30, 41, 59, 0.5);
+    color: #cbd5e1;
+}
+
+/* Live Pulse Animation */
+.badge-pulse {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--accent-emerald);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-emerald 2s infinite;
+}
+
+@keyframes pulse-emerald {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* Shimmer Progress Bar Animation */
+.progress-shimmer {
+    background: linear-gradient(90deg, #1d4ed8 0%, #38bdf8 50%, #1d4ed8 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0b1329;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e3a5f;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+}

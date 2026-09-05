@@ -1,0 +1,57 @@
+[
+  {
+    "screening_id": "SCR-20260904-FB9964",
+    "document_type": "visa",
+    "timestamp": "2026-09-04T15:39:34.689720Z",
+    "processing_status": "FLAGGED",
+    "risk_status": "High Concern",
+    "risk_level": "HIGH",
+    "summary": "Forged visa with mismatched numbers.",
+    "station_id": "SSB-BOP-RAXAUL-01",
+    "actor": "Sub-Inspector on Duty"
+  },
+  {
+    "screening_id": "SCR-20260904-8AC9F5",
+    "document_type": "passport",
+    "timestamp": "2026-09-04T15:39:34.687297Z",
+    "processing_status": "COMPLETED",
+    "risk_status": "Low Concern",
+    "risk_level": "LOW",
+    "summary": "Test passport screened cleanly.",
+    "station_id": "SSB-BOP-RAXAUL-01",
+    "actor": "Sub-Inspector on Duty"
+  },
+  {
+    "screening_id": "SCR-20260901-081245",
+    "document_type": "passport",
+    "timestamp": "2026-09-01T08:12:45Z",
+    "processing_status": "COMPLETED",
+    "risk_status": "Low Concern",
+    "risk_level": "LOW",
+    "summary": "Standard tourist passport. Baseline fields and photo matched.",
+    "station_id": "SSB-BOP-RAXAUL-01",
+    "actor": "Sub-Inspector R. Kumar"
+  },
+  {
+    "screening_id": "SCR-20260901-114522",
+    "document_type": "visa",
+    "timestamp": "2026-09-01T11:45:22Z",
+    "processing_status": "COMPLETED",
+    "risk_status": "Review Required",
+    "risk_level": "MEDIUM",
+    "summary": "Transit visa with non-standard stay duration. Officer visual check requested.",
+    "station_id": "SSB-BOP-RAXAUL-01",
+    "actor": "Sub-Inspector S. Singh"
+  },
+  {
+    "screening_id": "SCR-20260902-142010",
+    "document_type": "passport",
+    "timestamp": "2026-09-02T14:20:10Z",
+    "processing_status": "FLAGGED",
+    "risk_status": "High Concern",
+    "risk_level": "HIGH",
+    "summary": "Document expired on 2020-01-01. Diverted to secondary inspection.",
+    "station_id": "SSB-BOP-RAXAUL-01",
+    "actor": "Sub-Inspector R. Kumar"
+  }
+]
