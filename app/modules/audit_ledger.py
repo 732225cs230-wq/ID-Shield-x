@@ -168,42 +168,9 @@ class ScreeningHistoryStore:
             except Exception:
                 self.records = []
 
-        # Seed with initial synthetic demo records for realistic testing
-        self.records = [
-            {
-                "screening_id": "SCR-20260901-081245",
-                "document_type": "passport",
-                "timestamp": "2026-09-01T08:12:45Z",
-                "processing_status": "COMPLETED",
-                "risk_status": "Low Concern",
-                "risk_level": "LOW",
-                "summary": "Standard tourist passport. Baseline fields and photo matched.",
-                "station_id": "SSB-BOP-RAXAUL-01",
-                "actor": "Sub-Inspector R. Kumar"
-            },
-            {
-                "screening_id": "SCR-20260901-114522",
-                "document_type": "visa",
-                "timestamp": "2026-09-01T11:45:22Z",
-                "processing_status": "COMPLETED",
-                "risk_status": "Review Required",
-                "risk_level": "MEDIUM",
-                "summary": "Transit visa with non-standard stay duration. Officer visual check requested.",
-                "station_id": "SSB-BOP-RAXAUL-01",
-                "actor": "Sub-Inspector S. Singh"
-            },
-            {
-                "screening_id": "SCR-20260902-142010",
-                "document_type": "passport",
-                "timestamp": "2026-09-02T14:20:10Z",
-                "processing_status": "FLAGGED",
-                "risk_status": "High Concern",
-                "risk_level": "HIGH",
-                "summary": "Document expired on 2020-01-01. Diverted to secondary inspection.",
-                "station_id": "SSB-BOP-RAXAUL-01",
-                "actor": "Sub-Inspector R. Kumar"
-            }
-        ]
+        # Start with no screening records. Records exist only after a user has
+        # completed and explicitly saved a real verification.
+        self.records = []
         self._save()
 
     def _save(self):

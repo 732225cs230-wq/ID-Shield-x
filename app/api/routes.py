@@ -24,7 +24,8 @@ api_router = APIRouter(prefix="/api/v1", tags=["Border Screening"])
 
 START_TIME = time.time()
 
-# In-memory screening session registry for academic demo
+# In-memory screening session registry. Uploaded material is scoped to the
+# active process and reference selfies are removed immediately after analysis.
 SCREENING_SESSIONS = []
 
 def format_file_size(size_bytes: int) -> str:
@@ -73,7 +74,7 @@ def health_check():
         },
         "ocr_status": {
             "tesseract_installed": ocr_engine.is_tesseract_available(),
-            "default_engine": "Tesseract OCR" if ocr_engine.is_tesseract_available() else "Standalone Demo OCR Engine"
+            "default_engine": "Tesseract OCR" if ocr_engine.is_tesseract_available() else "OCR unavailable"
         },
         "mode": "OFFLINE_FIRST_EDGE",
         "uptime_seconds": uptime_seconds
@@ -94,29 +95,10 @@ def system_info():
     }
 
 
-@api_router.get("/documents/sample/{document_type}")
-def get_sample_document(document_type: str):
-    """Returns synthetic demo sample document image for testing."""
-    dtype = document_type.strip().lower()
-    sample_file = config.BASE_DIR / "data" / "synthetic_samples" / f"sample_{dtype}_demo.png"
-    if not sample_file.exists():
-        if dtype == "national_id":
-            sample_file = config.BASE_DIR / "data" / "synthetic_samples" / "sample_aadhaar_demo.png"
-        elif dtype == "passport":
-            sample_file = config.BASE_DIR / "data" / "synthetic_samples" / "sample_passport_demo.png"
-        elif dtype == "visa":
-            sample_file = config.BASE_DIR / "data" / "synthetic_samples" / "sample_visa_demo.png"
-
-    if not sample_file.exists():
-        raise HTTPException(status_code=404, detail=f"Sample scan for '{document_type}' not found.")
-
-    return FileResponse(path=str(sample_file), media_type="image/png", filename=f"sample_{dtype}_demo.png")
-
-
 @api_router.post("/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    document_type: str = Form("passport")
+    document_type: str = Form(...)
 ):
     """Secure Document Upload & Ingestion Endpoint."""
     if document_type not in config.DOCUMENT_CATEGORIES:
@@ -410,11 +392,16 @@ def analyze_authenticity_endpoint(
         target_session["status"] = "AUTHENTICITY_ANALYZED"
         target_session["authenticity"] = analysis_result
 
+    quality = _document_quality_summary(analysis_result)
+    if target_session:
+        target_session["document_quality"] = quality
+
     return {
         "success": True,
         "doc_id": doc_id,
         "document_type": doc_type,
-        "authenticity": analysis_result
+        "authenticity": analysis_result,
+        "quality": quality
     }
 
 
@@ -459,8 +446,7 @@ async def verify_faces_endpoint(
     reference_file: UploadFile = File(...)
 ):
     """
-    Step 6: Demo Face Comparison Endpoint
-    Compares the face detected in the document with an uploaded consented reference image.
+    Compares the face detected in the document with a user-uploaded selfie.
     Returns: Match / No Match / Unable to determine.
     Ephemeral processing: Reference image is safely cleaned up after comparison.
     """
@@ -476,7 +462,7 @@ async def verify_faces_endpoint(
     doc_type = target_session["document_type"] if target_session else "passport"
 
     ref_ext = Path(reference_file.filename or "ref.png").suffix.lower()
-    if ref_ext not in config.ALLOWED_EXTENSIONS:
+    if ref_ext not in {".jpg", ".jpeg", ".png", ".webp"}:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported reference image format '{ref_ext}'."
@@ -487,10 +473,19 @@ async def verify_faces_endpoint(
 
     try:
         content = await reference_file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="A face image is required for verification.")
+        if len(content) > config.MAX_UPLOAD_SIZE_BYTES:
+            raise HTTPException(status_code=413, detail="Face image exceeds the 10 MB limit.")
         temp_ref_path.write_bytes(content)
 
         # Execute Comparison
         comparison = face_engine.compare_faces(doc_filepath, temp_ref_path, document_type=doc_type)
+        selfie_quality = face_engine.analyze_face_image_quality(temp_ref_path)
+        comparison["selfie_quality"] = selfie_quality
+        if target_session:
+            target_session["face_comparison"] = comparison
+            target_session["selfie_quality"] = selfie_quality
 
         return {
             "success": True,
@@ -505,6 +500,54 @@ async def verify_faces_endpoint(
             except Exception:
                 pass
         await reference_file.close()
+
+
+@api_router.post("/face/analyze")
+async def analyze_selfie_endpoint(face_file: UploadFile = File(...)):
+    """Analyze only the selfie supplied by the user; no image is retained."""
+    ext = Path(face_file.filename or "selfie.png").suffix.lower()
+    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+        raise HTTPException(status_code=400, detail="Use a JPG, PNG, or WEBP face image.")
+    temp_path = config.UPLOAD_DIR / f"selfie_tmp_{uuid.uuid4()}{ext}"
+    try:
+        content = await face_file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="A face image is required.")
+        if len(content) > config.MAX_UPLOAD_SIZE_BYTES:
+            raise HTTPException(status_code=413, detail="Face image exceeds the 10 MB limit.")
+        temp_path.write_bytes(content)
+        return {"success": True, "face_quality": face_engine.analyze_face_image_quality(temp_path)}
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+        await face_file.close()
+
+
+def _document_quality_summary(analysis: dict) -> dict:
+    """Derive a transparent quality score from the actual quality/OCR checks."""
+    checks = analysis.get("checks", {})
+    image = checks.get("image_quality", {})
+    structure = checks.get("document_structure", {})
+    ocr = checks.get("ocr_consistency", {})
+    score = 100
+    for check in (image, structure, ocr):
+        if check.get("status") == "REVIEW":
+            score -= 25
+    score = max(0, score)
+    status = "GOOD QUALITY" if score >= 75 else "LOW QUALITY" if score >= 50 else "POOR QUALITY"
+    # A sharp image is not fully usable when its text cannot be read. Keep the
+    # measured score, but prevent a misleading good-quality label.
+    if ocr.get("status") == "REVIEW" and status == "GOOD QUALITY":
+        status = "LOW QUALITY"
+    if analysis.get("overall_status") == "Unable to determine":
+        status, score = "UNREADABLE", 0
+    metrics = image.get("metrics", {})
+    return {
+        "score_percent": score,
+        "status": status,
+        "metrics": {"resolution": f"{metrics.get('width', 'Unknown')}x{metrics.get('height', 'Unknown')}", "blur": metrics.get("blur_variance", metrics.get("blur_metric", "Not available"))},
+        "detail": image.get("detail", "Image quality could not be determined.")
+    }
 
 
 @api_router.post("/risk/analyze")
@@ -726,9 +769,6 @@ def set_security_role_endpoint(role: str = Form(...)):
         "message": f"Active role switched to {role.upper()}.",
         "role_info": security_guard.rbac_manager.get_role_info()
     }
-
-
-
 
 
 
