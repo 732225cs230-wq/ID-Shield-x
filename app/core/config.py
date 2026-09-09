@@ -9,12 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
 UPLOAD_DIR = DATA_DIR / "uploads"
 AUDIT_DIR = DATA_DIR / "audit"
-SYNTHETIC_DIR = DATA_DIR / "synthetic_samples"
 STATIC_DIR = BASE_DIR / "app" / "static"
 TEMPLATES_DIR = BASE_DIR / "app" / "templates"
 
 # Ensure runtime directories exist
-for directory in [UPLOAD_DIR, AUDIT_DIR, SYNTHETIC_DIR]:
+for directory in [UPLOAD_DIR, AUDIT_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
 # System Settings
@@ -42,7 +41,7 @@ ALLOWED_MIME_TYPES = {
     "application/octet-stream"  # Fallback for some browsers
 }
 
-# Document Types Supported across 5 Categories (17 Profiles + legacy aliases)
+# Document Types Supported across 5 Categories (17 required profiles)
 DOCUMENT_CATEGORIES = {
     # 1. Identity Documents
     "aadhaar": "Aadhaar Card (UIDAI Masked Reference)",
@@ -50,9 +49,6 @@ DOCUMENT_CATEGORIES = {
     "voter_id": "Voter ID Card (Election Commission EPIC)",
     "passport": "Passport (ICAO Doc 9303 TD3)",
     "driving_license": "Driving Licence (State Transport / Sarathi)",
-    # Legacy alias
-    "national_id": "National Identity Card (Aadhaar / Voter ID)",
-
     # 2. Travel / Government Documents
     "visa": "Travel / Entry Visa",
     "permit": "Border Transit Permit / Local Pass",
@@ -89,12 +85,6 @@ OCR_FIELD_BLUEPRINTS = {
         {"field": "visa_type", "label": "Visa Type (Transit/Tourist/Business)", "source": "Category Field", "required": True},
         {"field": "entry_validity", "label": "Entry Validity (Valid Until)", "source": "Validity Zone", "required": True},
         {"field": "stay_duration", "label": "Stay Duration (Days / Months)", "source": "Duration of Stay", "required": True}
-    ],
-    "national_id": [
-        {"field": "name", "label": "Full Name", "source": "Primary Header", "required": True},
-        {"field": "id_number", "label": "Identity Number", "source": "Central ID Zone", "required": True},
-        {"field": "dob", "label": "Date of Birth / Year", "source": "DOB Label", "required": True},
-        {"field": "gender", "label": "Gender", "source": "Demographic Field", "required": False}
     ],
     "driving_license": [
         {"field": "name", "label": "Driver Name", "source": "Licensee Field", "required": True},

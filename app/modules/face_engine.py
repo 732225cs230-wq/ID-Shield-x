@@ -39,6 +39,57 @@ def is_opencv_available() -> bool:
         return False
 
 
+def analyze_face_image_quality(filepath: Path) -> Dict[str, Any]:
+    """Measure selfie usability from the submitted image without retaining it."""
+    detection = detect_faces(filepath)
+    result = {
+        "status": "UNABLE TO ANALYZE",
+        "score_percent": 0,
+        "face_status": detection.get("status", "Unable to determine"),
+        "face_count": detection.get("face_count", 0),
+        "metrics": {},
+        "detail": detection.get("detail", "Unable to inspect image."),
+    }
+    if not filepath.exists() or not is_opencv_available():
+        return result
+    try:
+        import cv2
+        image = cv2.imread(str(filepath))
+        if image is None:
+            return result
+        height, width = image.shape[:2]
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        brightness = round(float(gray.mean()), 1)
+        blur = round(float(cv2.Laplacian(gray, cv2.CV_64F).var()), 1)
+        score = 100
+        if min(width, height) < 300:
+            score -= 25
+        if brightness < 45 or brightness > 220:
+            score -= 20
+        if blur < 60:
+            score -= 25
+        if detection.get("face_count") != 1:
+            score -= 35
+        score = max(0, score)
+        status = "GOOD QUALITY" if score >= 75 else "LOW QUALITY" if score >= 50 else "POOR QUALITY"
+        if detection.get("face_count") == 0:
+            status = "UNREADABLE"
+        face_box = detection.get("face_box") or {}
+        positioning = "Not available"
+        if face_box:
+            face_area = face_box.get("w", 0) * face_box.get("h", 0) / (width * height)
+            positioning = "Centered and usable" if 0.04 <= face_area <= 0.60 else "Face framing needs review"
+        result.update({
+            "status": status,
+            "score_percent": score,
+            "metrics": {"resolution": f"{width}x{height}", "brightness": brightness, "blur_variance": blur, "positioning": positioning},
+            "detail": "Quality score is calculated from resolution, lighting, sharpness, and face detection in the submitted image.",
+        })
+        return result
+    except Exception:
+        return result
+
+
 def _read_png_raster(filepath: Path) -> Tuple[int, int, bytes, bool]:
     """Extracts width, height, and decompressed RGBA scanlines from a PNG file."""
     if not filepath.exists() or not filepath.is_file():
@@ -251,6 +302,20 @@ def detect_faces(filepath: Path, document_type: Optional[str] = None) -> Dict[st
             "engine": "Standalone Fallback",
             "detail": "Image container format cannot be parsed by standalone engine. Valid PNG/JPG scan required.",
             "disclaimer": "Face comparison is for demonstration only and is not official identity verification."
+        }
+
+    # The standalone raster reader supports RGBA PNG scanlines only. Do not
+    # guess when a different valid PNG colour layout is supplied.
+    if len(decomp) < h * (1 + w * 4):
+        return {
+            "status": "Unable to determine",
+            "status_label": "Unable to determine",
+            "face_detected": False,
+            "face_count": 0,
+            "cropped_face_uri": None,
+            "engine": "Raster Format Guard",
+            "detail": "Image colour layout is not supported by the standalone face detector.",
+            "disclaimer": "Human verification is required for any real-world identity decision."
         }
 
     # Minimum resolution check
